@@ -7,8 +7,16 @@ gemfile do
   gem "ruby-progressbar"
 end
 
+# Interactive Warning
+puts "WARNING: This script will truncate the 'firstnames' table and reset the primary key. Are you sure you want to proceed? (y/n)"
+response = gets.chomp.downcase
+abort("Exiting script.") unless response == "y"
+
 # PostgreSQL Connection
 conn = PG.connect(dbname: "names2016")
+
+# Truncate table and reset sequence
+conn.exec("TRUNCATE TABLE firstnames RESTART IDENTITY")
 
 # Directory containing CSV files
 directory_path = "data/firstnames" # Replace with the actual path
