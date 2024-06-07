@@ -8,15 +8,29 @@ gemfile do
 end
 
 # Interactive Warning
-puts "WARNING: This script will truncate the 'firstnames' table and reset the primary key. Are you sure you want to proceed? (y/n)"
+puts "WARNING: This script will drop the 'firstnames' table and rebuild it. Are you sure you want to proceed? (y/n)"
 response = gets.chomp.downcase
 abort("Exiting script.") unless response == "y"
 
 # PostgreSQL Connection
 conn = PG.connect(dbname: "names2016")
 
-# Truncate table and reset sequence
-conn.exec("TRUNCATE TABLE firstnames RESTART IDENTITY")
+# Drop existing table and rebuild it.
+begin
+  conn.exec(
+    "DROP TABLE IF EXISTS firstnames;
+  CREATE TABLE firstnames (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      gender CHAR(1) CHECK (gender IN ('M', 'F')),
+      count INTEGER NOT NULL,
+      rank INTEGER,
+      year INTEGER
+    );"
+  )
+rescue PG::Error => e
+  puts "Error dropping and rebuilding table: #{e.message}"
+end
 
 # Directory containing CSV files
 directory_path = "data/firstnames"
@@ -47,10 +61,14 @@ Dir[File.join(directory_path, "*.csv")].sort.each do |file_path|
     ranks[gender] += 1 # Increment rank for the gender within this year
 
     # Insert yearly data
-    conn.exec_params(
-      "INSERT INTO firstnames (name, gender, count, rank, year) VALUES ($1, $2, $3, $4, $5)",
-      [name, gender, count, ranks[gender], year]
-    )
+    begin
+      conn.exec_params(
+        "INSERT INTO firstnames (name, gender, count, rank, year) VALUES ($1, $2, $3, $4, $5)",
+        [name, gender, count, ranks[gender], year]
+      )
+    rescue PG::Error => e
+      puts "Error inserting CSV data: #{e.message}"
+    end
 
     # Accumulate counts for each name and gender (for cumulative data)
     cumulative_counts[[name, gender]] += count
@@ -83,10 +101,14 @@ cumulative_counts
 
 # Insert cumulative data with year 0
 cumulative_counts.each do |(name, gender), count|
-  conn.exec_params(
-    "INSERT INTO firstnames (name, gender, count, rank, year) VALUES ($1, $2, $3, $4, $5)",
-    [name, gender, count, ranks[gender][name], 0]
-  )
+  begin
+    conn.exec_params(
+      "INSERT INTO firstnames (name, gender, count, rank, year) VALUES ($1, $2, $3, $4, $5)",
+      [name, gender, count, ranks[gender][name], 0]
+    )
+  rescue PG::Error => e
+    puts "Error inserting cumulative data: #{e.message}"
+  end
 
   cumulative_progressbar.increment
 end
