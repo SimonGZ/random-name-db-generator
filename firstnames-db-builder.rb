@@ -28,6 +28,9 @@ begin
       year INTEGER
     );"
   )
+  conn.exec(
+    "CREATE INDEX idx_firstnames_year_gender ON firstnames (year, gender);"
+  )
 rescue PG::Error => e
   puts "Error dropping and rebuilding table: #{e.message}"
 end
