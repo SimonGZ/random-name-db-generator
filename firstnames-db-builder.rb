@@ -21,7 +21,7 @@ begin
     "DROP TABLE IF EXISTS firstnames;
   CREATE TABLE firstnames (
       id SERIAL PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
+      name VARCHAR(30) NOT NULL,
       gender CHAR(1) CHECK (gender IN ('M', 'F')),
       count INTEGER NOT NULL,
       rank INTEGER,
