@@ -75,6 +75,10 @@ begin
     GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO names;"
   )
   puts "Privileges granted to 'names' user."
+  conn.exec(
+    "CREATE INDEX idx_surnames_prop100k ON surnames (prop100k);
+    CREATE INDEX idx_surnames_pctnative ON surnames (pctnative);"
+  )
 rescue PG::Error => e
   puts "Error dropping and creating table: #{e.message}"
   abort("Exiting script.")

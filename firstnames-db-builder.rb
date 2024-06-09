@@ -29,6 +29,12 @@ begin
     );"
   )
   conn.exec(
+    "GRANT ALL PRIVILEGES ON DATABASE names2016 TO names;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO names;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO names;"
+  )
+  puts "Privileges granted to 'names' user."
+  conn.exec(
     "CREATE INDEX idx_firstnames_year_gender ON firstnames (year, gender);"
   )
 rescue PG::Error => e
