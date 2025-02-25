@@ -35,7 +35,8 @@ begin
   )
   puts "Privileges granted to 'names' user."
   conn.exec(
-    "CREATE INDEX idx_firstnames_year_gender ON firstnames (year, gender);"
+    "CREATE INDEX idx_firstnames_year_gender ON firstnames (year, gender);
+     CREATE INDEX idx_firstnames_name_year ON firstnames (name, year);"
   )
 rescue PG::Error => e
   puts "Error dropping and rebuilding table: #{e.message}"
