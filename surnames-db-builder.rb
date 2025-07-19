@@ -8,12 +8,21 @@ gemfile do
 end
 
 # Interactive Warning
-puts "WARNING: This script will drop the 'surnames' table and rebuild it. Are you sure you want to proceed? (y/n)"
-response = gets.chomp.downcase
-abort("Exiting script.") unless response == "y"
+if ENV["NONINTERACTIVE"] != "1"
+  puts "WARNING: This script will drop the 'firstnames' table and rebuild it. Are you sure you want to proceed? (y/n)"
+  response = gets.chomp.downcase
+  abort("Exiting script.") unless response == "y"
+else
+  puts "Running in non-interactive mode — skipping prompt."
+end
 
 # PostgreSQL Connection
-conn = PG.connect(dbname: "names2016")
+conn = PG.connect(
+  host:     ENV.fetch("DB_HOST", "localhost"),
+  dbname:   ENV.fetch("DB_NAME", "names2016"),
+  user:     ENV.fetch("DB_USER", "names"),
+  password: ENV["DB_PASSWORD"] # optional; can be nil
+)
 
 # CSV File Path
 csv_file_path = "data/surnames_2010Census.csv"
@@ -70,11 +79,11 @@ begin
   conn.exec(create_table_sql)
   puts "Table 'surnames' created successfully."
   conn.exec(
-    "GRANT ALL PRIVILEGES ON DATABASE names2016 TO names;
-    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO names;
-    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO names;"
+    "GRANT ALL PRIVILEGES ON DATABASE #{ENV.fetch("DB_NAME", "names2016")} TO #{ENV.fetch("DB_USER", "names")};
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO #{ENV.fetch("DB_USER", "names")};
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO #{ENV.fetch("DB_USER", "names")};"
   )
-  puts "Privileges granted to 'names' user."
+  puts "Privileges granted to '#{ENV.fetch("DB_USER", "names")}' user."
   conn.exec(
     "CREATE INDEX idx_surnames_prop100k ON surnames (prop100k);
     CREATE INDEX idx_surnames_pctnative ON surnames (pctnative);"
@@ -86,13 +95,15 @@ end
 
 # Insert data from CSV (using headers)
 puts "Inserting data from CSV..."
-CSV.foreach(csv_file_path, headers: true) do |row|
+CSV.foreach(csv_file_path, headers: true).with_index do |row, index|
   # Build insert statement with column names and values
   column_names = row.headers.join(", ")
   values = row.map { |_, value| "'#{value.capitalize}'" }.join(", ")
   insert_sql = "INSERT INTO surnames (#{column_names}) VALUES (#{values});"
   conn.exec(insert_sql)
-  import_progressbar.increment
+  if (index + 1) % 1000 == 0
+    puts "Inserted #{index + 1} surname records..."
+  end
 end
 
 import_progressbar.finish

@@ -8,12 +8,21 @@ gemfile do
 end
 
 # Interactive Warning
-puts "WARNING: This script will drop the 'firstnames' table and rebuild it. Are you sure you want to proceed? (y/n)"
-response = gets.chomp.downcase
-abort("Exiting script.") unless response == "y"
+if ENV["NONINTERACTIVE"] != "1"
+  puts "WARNING: This script will drop the 'firstnames' table and rebuild it. Are you sure you want to proceed? (y/n)"
+  response = gets.chomp.downcase
+  abort("Exiting script.") unless response == "y"
+else
+  puts "Running in non-interactive mode — skipping prompt."
+end
 
 # PostgreSQL Connection
-conn = PG.connect(dbname: "names2016")
+conn = PG.connect(
+  host:     ENV.fetch("DB_HOST", "localhost"),
+  dbname:   ENV.fetch("DB_NAME", "names2016"),
+  user:     ENV.fetch("DB_USER", "names"),
+  password: ENV["DB_PASSWORD"] # optional; can be nil
+)
 
 # Drop existing table and rebuild it.
 begin
@@ -29,11 +38,11 @@ begin
     );"
   )
   conn.exec(
-    "GRANT ALL PRIVILEGES ON DATABASE names2016 TO names;
-    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO names;
-    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO names;"
+    "GRANT ALL PRIVILEGES ON DATABASE #{ENV.fetch("DB_NAME", "names2016")} TO #{ENV.fetch("DB_USER", "names")};
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO #{ENV.fetch("DB_USER", "names")};
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO #{ENV.fetch("DB_USER", "names")};"
   )
-  puts "Privileges granted to 'names' user."
+  puts "Privileges granted to '#{ENV.fetch("DB_USER", "names")}' user."
   conn.exec(
     "CREATE INDEX idx_firstnames_year_gender ON firstnames (year, gender);
      CREATE INDEX idx_firstnames_name_year ON firstnames (name, year);"
@@ -47,12 +56,7 @@ directory_path = "data/firstnames"
 
 # Progress bar for importing CSV files
 total_files = Dir[File.join(directory_path, "*.csv")].count
-import_progressbar =
-  ProgressBar.create(
-    title: "Importing CSV Files",
-    total: total_files,
-    format: "%t: |%B| %p%% %E"
-  )
+puts "Found #{total_files} CSV files to import."
 
 # Hash to store cumulative counts for each name and gender
 cumulative_counts = Hash.new { |hash, key| hash[key] = 0 }
@@ -60,6 +64,7 @@ cumulative_counts = Hash.new { |hash, key| hash[key] = 0 }
 # Iterate through files, insert yearly data, and accumulate counts
 Dir[File.join(directory_path, "*.csv")].sort.each do |file_path|
   year = File.basename(file_path, ".csv").to_i
+  puts "Processing #{file_path}..."
 
   # Hash to track ranks per gender (for yearly data)
   ranks = { "M" => 0, "F" => 0 }
@@ -83,20 +88,14 @@ Dir[File.join(directory_path, "*.csv")].sort.each do |file_path|
     # Accumulate counts for each name and gender (for cumulative data)
     cumulative_counts[[name, gender]] += count
   end
-
-  import_progressbar.increment
+  puts "Finished processing #{file_path}."
 end
 
-import_progressbar.finish
+puts "Finished importing all CSV files."
 
 # Progress bar for calculating and inserting cumulative data
 total_names = cumulative_counts.size
-cumulative_progressbar =
-  ProgressBar.create(
-    title: "Calculating & Inserting Cumulative Data",
-    total: total_names,
-    format: "%t: |%B| %p%% %E"
-  )
+puts "Calculating and inserting cumulative data for #{total_names} names."
 
 # Calculate ranks based on cumulative counts
 ranks = {}
@@ -110,7 +109,7 @@ cumulative_counts
   end
 
 # Insert cumulative data with year 0
-cumulative_counts.each do |(name, gender), count|
+cumulative_counts.each_with_index do |((name, gender), count), index|
   begin
     conn.exec_params(
       "INSERT INTO firstnames (name, gender, count, rank, year) VALUES ($1, $2, $3, $4, $5)",
@@ -119,9 +118,9 @@ cumulative_counts.each do |(name, gender), count|
   rescue PG::Error => e
     puts "Error inserting cumulative data: #{e.message}"
   end
-
-  cumulative_progressbar.increment
+  if (index + 1) % 1000 == 0
+    puts "Inserted #{index + 1} cumulative records..."
+  end
 end
 
-cumulative_progressbar.finish
 conn.close
