@@ -95,19 +95,23 @@ end
 
 # Insert data from CSV (using headers)
 puts "Inserting data from CSV..."
-CSV.foreach(csv_file_path, headers: true).with_index do |row, index|
-  # Build insert statement with column names and values
-  column_names = row.headers.join(", ")
-  values = row.map { |_, value| "'#{value.capitalize}'" }.join(", ")
-  insert_sql = "INSERT INTO surnames (#{column_names}) VALUES (#{values});"
-  conn.exec(insert_sql)
-  if (index + 1) % 1000 == 0
-    puts "Inserted #{index + 1} surname records..."
+
+# Use COPY for much faster bulk import
+conn.copy_data "COPY surnames (#{headers.join(",")}) FROM STDIN CSV" do
+  CSV.foreach(csv_file_path, headers: true).with_index do |row, index|
+    conn.put_copy_data row.fields.to_csv
+    if (index + 1) % 1000 == 0
+      puts "Inserted #{index + 1} surname records..."
+    end
   end
 end
 
-import_progressbar.finish
 puts "Data import completed."
+
+# Capitalize the names
+puts "Capitalizing names..."
+conn.exec("UPDATE surnames SET name = INITCAP(name);");
+puts "Names capitalized."
 
 # Close connection
 conn.close
