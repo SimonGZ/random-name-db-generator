@@ -21,14 +21,16 @@ conn = PG.connect(
   host:     ENV.fetch("DB_HOST", "localhost"),
   dbname:   ENV.fetch("DB_NAME", "names2016"),
   user:     ENV.fetch("DB_USER", "names"),
-  password: ENV["DB_PASSWORD"] # optional; can be nil
+  password: ENV["DB_PASSWORD"]
 )
 
-# Drop existing table and rebuild it.
+# Drop existing table and rebuild it
 begin
+  conn.exec("DROP TABLE IF EXISTS firstnames;")
+
+  # Create table without ranks initially - we'll calculate them in SQL
   conn.exec(
-    "DROP TABLE IF EXISTS firstnames;
-  CREATE TABLE firstnames (
+    "CREATE TABLE firstnames (
       id SERIAL PRIMARY KEY,
       name VARCHAR(30) NOT NULL,
       gender CHAR(1) CHECK (gender IN ('M', 'F')),
@@ -37,81 +39,93 @@ begin
       year INTEGER
     );"
   )
+
   conn.exec(
     "GRANT ALL PRIVILEGES ON DATABASE #{ENV.fetch("DB_NAME", "names2016")} TO #{ENV.fetch("DB_USER", "names")};
     GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO #{ENV.fetch("DB_USER", "names")};
     GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO #{ENV.fetch("DB_USER", "names")};"
   )
-  puts "Privileges granted to '#{ENV.fetch("DB_USER", "names")}' user."
-  conn.exec(
-    "CREATE INDEX idx_firstnames_year_gender ON firstnames (year, gender);
-     CREATE INDEX idx_firstnames_name_year ON firstnames (name, year);"
-  )
+  puts "Table created and privileges granted."
 rescue PG::Error => e
-  puts "Error dropping and rebuilding table: #{e.message}"
+  puts "Error setting up table: #{e.message}"
+  exit 1
 end
 
 # Directory containing CSV files
 directory_path = "data/firstnames"
-
-# Progress bar for importing CSV files
-total_files = Dir[File.join(directory_path, "*.csv")].count
+csv_files = Dir[File.join(directory_path, "*.csv")].sort
+total_files = csv_files.count
 puts "Found #{total_files} CSV files to import."
 
-# Hash to store cumulative counts for each name and gender
-cumulative_counts = Hash.new { |hash, key| hash[key] = 0 }
+# Import with sequence numbers to preserve CSV row order for ranking
+puts "Importing CSV data..."
+batch_size = 10000
+batch_buffer = []
 
-# Use COPY for much faster bulk import
-conn.copy_data "COPY firstnames (name, gender, count, rank, year) FROM STDIN CSV" do
-  # Iterate through files, insert yearly data, and accumulate counts
-  Dir[File.join(directory_path, "*.csv")].sort.each do |file_path|
+conn.copy_data "COPY firstnames (name, gender, count, year, rank) FROM STDIN CSV" do
+  csv_files.each_with_index do |file_path, file_index|
     year = File.basename(file_path, ".csv").to_i
-    puts "Processing #{file_path}..."
+    puts "Processing #{file_path} (#{file_index + 1}/#{total_files})..."
 
-    # Hash to track ranks per gender (for yearly data)
+    # Track ranks per gender (order in CSV determines rank)
     ranks = { "M" => 0, "F" => 0 }
 
     CSV.foreach(file_path, headers: false) do |row|
       name, gender, count = row
       count = count.to_i
+      ranks[gender] += 1
 
-      ranks[gender] += 1 # Increment rank for the gender within this year
+      batch_buffer << "#{name},#{gender},#{count},#{year},#{ranks[gender]}\n"
 
-      # Write row to the COPY stream
-      conn.put_copy_data [name, gender, count, ranks[gender], year].to_csv
-
-      # Accumulate counts for each name and gender (for cumulative data)
-      cumulative_counts[[name, gender]] += count
+      if batch_buffer.size >= batch_size
+        conn.put_copy_data batch_buffer.join
+        batch_buffer.clear
+      end
     end
-    puts "Finished processing #{file_path}."
+  end
+
+  # Flush remaining batch
+  unless batch_buffer.empty?
+    conn.put_copy_data batch_buffer.join
   end
 end
 
-puts "Finished importing all CSV files."
+puts "Yearly data imported with ranks. Now calculating cumulative data..."
 
-# Progress bar for calculating and inserting cumulative data
-total_names = cumulative_counts.size
-puts "Calculating and inserting cumulative data for #{total_names} names."
+# Insert cumulative data (year 0) using PostgreSQL aggregation
+puts "Calculating and inserting cumulative data..."
+conn.exec(
+  "INSERT INTO firstnames (name, gender, count, rank, year)
+   SELECT
+     name,
+     gender,
+     SUM(count) as total_count,
+     ROW_NUMBER() OVER (PARTITION BY gender ORDER BY SUM(count) DESC) as rank,
+     0 as year
+   FROM firstnames
+   WHERE year > 0
+   GROUP BY name, gender;"
+)
 
-# Calculate ranks based on cumulative counts
-ranks = {}
-cumulative_counts
-  .group_by { |(name, gender), _| gender }
-  .each do |gender, names|
-    ranks[gender] = names
-      .sort_by { |_, count| -count }
-      .each_with_index
-      .to_h { |((name, _), count), rank| [name, rank + 1] }
-  end
+# Create indexes for performance
+puts "Creating indexes..."
+begin
+  conn.exec(
+    "CREATE INDEX idx_firstnames_year_gender ON firstnames (year, gender);
+     CREATE INDEX idx_firstnames_name_year ON firstnames (name, year);"
+  )
+  puts "Indexes created successfully."
+rescue PG::Error => e
+  puts "Error creating indexes: #{e.message}"
+end
 
-# Insert cumulative data with year 0
-conn.copy_data "COPY firstnames (name, gender, count, rank, year) FROM STDIN CSV" do
-  cumulative_counts.each_with_index do |((name, gender), count), index|
-    conn.put_copy_data [name, gender, count, ranks[gender][name], 0].to_csv
-    if (index + 1) % 1000 == 0
-      puts "Inserted #{index + 1} cumulative records..."
-    end
-  end
+# Show summary statistics
+result = conn.exec("SELECT year, gender, COUNT(*) as name_count FROM firstnames GROUP BY year, gender ORDER BY year, gender;")
+puts "\nSummary:"
+result.each do |row|
+  year_label = row['year'].to_i == 0 ? "Cumulative" : row['year']
+  puts "  #{year_label} #{row['gender']}: #{row['name_count']} names"
 end
 
 conn.close
+puts "Import completed successfully!"
