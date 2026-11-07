@@ -5310,7 +5310,7 @@ Zorka,F,5
 Zylpha,F,5
 John,M,51852
 William,M,42422
-James,M,37338
+James,M,37337
 Robert,M,35220
 Joseph,M,24761
 George,M,24196
@@ -5329,7 +5329,7 @@ Albert,M,9157
 Harry,M,8856
 Donald,M,8729
 Ralph,M,7391
-Jack,M,6874
+Jack,M,6875
 Louis,M,6771
 Carl,M,6699
 Clarence,M,6587
@@ -5379,7 +5379,7 @@ Marvin,M,2517
 Gerald,M,2486
 Lewis,M,2477
 Vernon,M,2463
-Sam,M,2455
+Sam,M,2454
 Woodrow,M,2428
 Ray,M,2426
 Milton,M,2394
@@ -5435,7 +5435,7 @@ Franklin,M,1194
 Horace,M,1182
 Mike,M,1181
 Oliver,M,1175
-Manuel,M,1158
+Manuel,M,1157
 Ben,M,1128
 Jacob,M,1122
 Tony,M,1111
@@ -6773,6 +6773,7 @@ Kalman,M,24
 Landon,M,24
 Lars,M,24
 Leonidas,M,24
+Levie,M,24
 Manning,M,24
 Mervyn,M,24
 Mitsuo,M,24
@@ -6818,7 +6819,6 @@ Lavon,M,23
 Lemon,M,23
 Lennie,M,23
 Lessie,M,23
-Levie,M,23
 Lorne,M,23
 Mannie,M,23
 Marty,M,23

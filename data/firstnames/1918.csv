@@ -5,7 +5,7 @@ Margaret,F,27139
 Ruth,F,25535
 Mildred,F,17258
 Virginia,F,16421
-Frances,F,16131
+Frances,F,16132
 Elizabeth,F,15853
 Anna,F,15666
 Evelyn,F,13493
@@ -22,7 +22,7 @@ Betty,F,8803
 Gladys,F,8734
 Edna,F,8698
 Josephine,F,8682
-Martha,F,8342
+Martha,F,8341
 Eleanor,F,8176
 Ruby,F,8134
 Ethel,F,8075
@@ -5607,7 +5607,7 @@ Jack,M,8341
 Ralph,M,8162
 Clarence,M,7187
 Louis,M,7082
-Carl,M,7003
+Carl,M,7004
 Howard,M,6928
 Kenneth,M,6809
 David,M,6627
@@ -5657,7 +5657,7 @@ Philip,M,2733
 Gerald,M,2712
 Vincent,M,2621
 Lewis,M,2593
-Sam,M,2505
+Sam,M,2506
 Milton,M,2454
 Leon,M,2442
 Jesse,M,2433
@@ -5978,9 +5978,9 @@ Omer,M,234
 Freeman,M,229
 Silas,M,229
 Emory,M,226
-Jean,M,226
 Norris,M,226
 Pedro,M,226
+Jean,M,225
 Royal,M,223
 Sanford,M,222
 Winston,M,222
@@ -6558,7 +6558,6 @@ Nat,M,48
 Talmage,M,48
 Vincenzo,M,48
 Arley,M,47
-Donovan,M,47
 Enos,M,47
 Glenwood,M,47
 Hilary,M,47
@@ -6571,6 +6570,7 @@ Waldemar,M,47
 Winifred,M,47
 Art,M,46
 Damon,M,46
+Donovan,M,46
 Eduardo,M,46
 Jordan,M,46
 Joyce,M,46

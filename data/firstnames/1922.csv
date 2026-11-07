@@ -1,16 +1,16 @@
-Mary,F,72176
+Mary,F,72177
 Dorothy,F,37716
 Helen,F,32510
 Margaret,F,26862
 Ruth,F,23633
-Betty,F,20894
+Betty,F,20895
 Virginia,F,19144
 Mildred,F,16412
-Elizabeth,F,15243
+Elizabeth,F,15244
 Frances,F,15054
 Doris,F,13798
 Anna,F,13408
-Evelyn,F,13319
+Evelyn,F,13320
 Marie,F,11912
 Alice,F,11277
 Marjorie,F,10385
@@ -712,9 +712,9 @@ Alvera,F,104
 Annetta,F,104
 Dawn,F,104
 Delphia,F,104
-Doreen,F,104
 Joseph,F,104
 Norine,F,104
+Doreen,F,103
 Elisa,F,103
 Emmie,F,103
 Gayle,F,102
@@ -2709,6 +2709,7 @@ Mariellen,F,13
 Mark,F,13
 Martin,F,13
 Marveline,F,13
+Marvell,F,13
 Marzell,F,13
 Massie,F,13
 Maudell,F,13
@@ -2896,7 +2897,6 @@ Margree,F,12
 Marice,F,12
 Mariette,F,12
 Martine,F,12
-Marvell,F,12
 Marvine,F,12
 Marylynn,F,12
 Marzella,F,12
@@ -4185,6 +4185,7 @@ Gerlene,F,7
 Gerline,F,7
 Geroldine,F,7
 Girtrue,F,7
+Giuseppina,F,7
 Gladiola,F,7
 Glendon,F,7
 Gleneva,F,7
@@ -4660,7 +4661,6 @@ Geneviene,F,6
 Geniva,F,6
 Geral,F,6
 Geraldyn,F,6
-Giuseppina,F,6
 Glendine,F,6
 Glenola,F,6
 Glenyce,F,6
@@ -5787,10 +5787,10 @@ Zonie,F,5
 Zuma,F,5
 Zylpha,F,5
 Zylphia,F,5
-John,M,57281
+John,M,57280
 Robert,M,53796
-William,M,51112
-James,M,49803
+William,M,51111
+James,M,49802
 Charles,M,28839
 George,M,27350
 Joseph,M,25699
@@ -5814,7 +5814,7 @@ David,M,7865
 Eugene,M,7849
 Howard,M,7296
 Louis,M,7095
-Willie,M,6904
+Willie,M,6903
 Clarence,M,6861
 Carl,M,6690
 Earl,M,6461
@@ -5859,14 +5859,14 @@ Lester,M,2951
 Philip,M,2769
 Vincent,M,2710
 Charlie,M,2655
-Alvin,M,2598
+Alvin,M,2599
 Milton,M,2556
 Lewis,M,2555
 Gordon,M,2527
 Leon,M,2521
 Wayne,M,2476
 Glenn,M,2425
-Martin,M,2403
+Martin,M,2402
 Jesse,M,2395
 Benjamin,M,2378
 Lee,M,2371
@@ -6686,6 +6686,7 @@ Huston,M,60
 Judge,M,60
 Kendall,M,60
 Marcellus,M,60
+Marshal,M,60
 Mickey,M,60
 Mitchel,M,60
 Wellington,M,60
@@ -6697,7 +6698,6 @@ Cloyd,M,59
 Dwayne,M,59
 Hampton,M,59
 Malvin,M,59
-Marshal,M,59
 Reno,M,59
 Verner,M,59
 Brice,M,58
@@ -6809,7 +6809,6 @@ Tim,M,49
 Vernard,M,49
 Wayman,M,49
 Wyatt,M,49
-Zeb,M,49
 Arlin,M,48
 Auther,M,48
 Courtney,M,48
@@ -6818,6 +6817,7 @@ Denton,M,48
 Dorman,M,48
 Lynwood,M,48
 Waymon,M,48
+Zeb,M,48
 Ansel,M,47
 Arch,M,47
 Ardell,M,47
